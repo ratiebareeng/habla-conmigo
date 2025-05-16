@@ -16,13 +16,13 @@ HablaConmigo is a web application designed to help you practise speaking Spanish
 ## Screenshots
 
 ### Mobile View (Light Mode)
-![Mobile Light Mode](./assets/screenshots/mobile-light.jpg)
+![Mobile Light Mode](./assets/screenshots/mobile-light.jpeg)
 
 ### Mobile View (Dark Mode)
-![Mobile Dark Mode](./assets/screenshots/mobile-dark.jpg)
+![Mobile Dark Mode](./assets/screenshots/mobile-dark.jpeg)
 
 ### Desktop View
-![Desktop View](./assets/screenshots/desktop.jpg)
+![Desktop View](./assets/screenshots/desktop.png)
 
 ## Getting Started
 
