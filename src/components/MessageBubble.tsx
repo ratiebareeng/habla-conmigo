@@ -1,4 +1,4 @@
-import { User, Volume2 } from 'lucide-react';
+import { RefreshCw, User, Volume2 } from 'lucide-react';
 import React from 'react';
 import { Message } from '../types/chat';
 import { formatTime } from '../utils/formatters';
@@ -6,9 +6,10 @@ import VoiceMessage from './VoiceMessage';
 
 interface MessageBubbleProps {
   message: Message;
+  onRetryAiSpeech?: () => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onRetryAiSpeech }) => {
   const isAi = message.sender === 'ai';
   
   // For demo purposes, all AI messages are treated as voice messages
@@ -25,6 +26,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           text={message.text}
           duration={estimatedDuration}
           isAi={isAi}
+          onRetryPlayback={onRetryAiSpeech}
         />
       </div>
     );
@@ -49,6 +51,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           <span className="font-medium">
             {isAi ? 'Tutor' : 'Tú'}
           </span>
+          
+          {isAi && onRetryAiSpeech && (
+            <button
+              onClick={onRetryAiSpeech}
+              className="ml-2 text-orange-500 hover:text-orange-600"
+              title="Retry speech"
+            >
+              <RefreshCw className="w-3 h-3" />
+            </button>
+          )}
         </div>
         <p>{message.text}</p>
         <span className={`text-xs ${isAi ? 'text-slate-500' : 'text-blue-100'} block text-right mt-1`}>

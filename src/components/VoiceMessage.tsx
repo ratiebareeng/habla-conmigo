@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Pause, Play, Volume2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Pause, Play, RefreshCw, Volume2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import VoiceWaveform from './VoiceWaveForm'; // Ensure this file exists or create a placeholder component
 
@@ -6,9 +6,10 @@ interface VoiceMessageProps {
   text: string;
   duration: number;
   isAi: boolean;
+  onRetryPlayback?: () => void;
 }
 
-const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi }) => {
+const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRetryPlayback }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showText, setShowText] = useState(false);
   const [playbackProgress, setPlaybackProgress] = useState(0);
@@ -16,7 +17,9 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi }) => 
   
   // Clean up interval on unmount
   useEffect(() => {
-    if (intervalId) clearInterval(intervalId);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [intervalId]);
   
   // Convert seconds to MM:SS format
@@ -102,17 +105,30 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi }) => 
       </div>
       
       <div className="flex justify-between items-center">
-        <button 
-          onClick={toggleTextVisibility}
-          className={`text-xs flex items-center ${isAi ? 'text-orange-600' : 'text-blue-200'}`}
-        >
-          {showText ? 'Hide text' : 'Show text'}
-          {showText ? (
-            <ChevronUp className="w-3 h-3 ml-1" />
-          ) : (
-            <ChevronDown className="w-3 h-3 ml-1" />
+        <div className="flex items-center">
+          <button 
+            onClick={toggleTextVisibility}
+            className={`text-xs flex items-center ${isAi ? 'text-orange-600' : 'text-blue-200'}`}
+          >
+            {showText ? 'Hide text' : 'Show text'}
+            {showText ? (
+              <ChevronUp className="w-3 h-3 ml-1" />
+            ) : (
+              <ChevronDown className="w-3 h-3 ml-1" />
+            )}
+          </button>
+          
+          {isAi && onRetryPlayback && (
+            <button
+              onClick={onRetryPlayback}
+              className="text-xs flex items-center text-orange-600 ml-3"
+              title="Retry speech"
+            >
+              <RefreshCw className="w-3 h-3 mr-1" />
+              Speak again
+            </button>
           )}
-        </button>
+        </div>
         
         <span className={`text-xs ${isAi ? 'text-slate-500' : 'text-blue-100'}`}>
           {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

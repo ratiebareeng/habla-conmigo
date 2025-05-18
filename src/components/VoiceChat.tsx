@@ -25,22 +25,44 @@ const VoiceChat: React.FC = () => {
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [speechSynthesisAvailable, setSpeechSynthesisAvailable] = useState(false);
+  const [voiceDebugInfo, setVoiceDebugInfo] = useState<string>('');
 
   // Initialize speech synthesis voices
   useEffect(() => {
-    const loadVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices();
-      setVoices(availableVoices);
-    };
+    if ('speechSynthesis' in window) {
+      setSpeechSynthesisAvailable(true);
+      
+      const loadVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices();
+        setVoices(availableVoices);
+        
+        // Debug info
+        const spanishVoices = availableVoices.filter(voice => voice.lang.startsWith('es'));
+        setVoiceDebugInfo(`Found ${availableVoices.length} voices, ${spanishVoices.length} Spanish voices`);
+        
+        // Ensure initial message is spoken if voices are available
+        if (spanishVoices.length > 0 && messages.length === 1) {
+          // Slight delay to ensure voices are fully loaded
+          setTimeout(() => {
+            speak(messages[0].text);
+          }, 500);
+        }
+      };
 
-    loadVoices();
-    
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      // Load voices immediately
+      loadVoices();
+      
+      // And also set up the onvoiceschanged event
       window.speechSynthesis.onvoiceschanged = loadVoices;
+    } else {
+      setVoiceDebugInfo('Speech synthesis not available in this browser');
     }
 
     return () => {
-      window.speechSynthesis.cancel(); // Cleanup any ongoing speech
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Cleanup any ongoing speech
+      }
     };
   }, []);
 
@@ -80,9 +102,14 @@ const VoiceChat: React.FC = () => {
     };
   }, [isListening]);
 
-  // Handle text-to-speech
+  // Handle text-to-speech with improved reliability
   const speak = (text: string) => {
-    if ('speechSynthesis' in window) {
+    if (!speechSynthesisAvailable) {
+      console.warn('Speech synthesis not available');
+      return;
+    }
+    
+    try {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
 
@@ -91,20 +118,61 @@ const VoiceChat: React.FC = () => {
       utterance.rate = 0.9; // Slightly slower for learning
       utterance.pitch = 1;
 
-      // Find a Spanish voice
-      const spanishVoice = voices.find(voice => 
+      // Find a Spanish voice - first try to find a non-local voice
+      let spanishVoice = voices.find(voice => 
         voice.lang.startsWith('es') && !voice.localService
       );
       
+      // If no non-local Spanish voice, try any Spanish voice
+      if (!spanishVoice) {
+        spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+      }
+      
+      // If still no Spanish voice, just use the default voice
       if (spanishVoice) {
         utterance.voice = spanishVoice;
+        setVoiceDebugInfo(`Using voice: ${spanishVoice.name} (${spanishVoice.lang})`);
+      } else {
+        setVoiceDebugInfo('No Spanish voice found, using default voice');
       }
 
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onstart = () => {
+        console.log('Speech started');
+        setIsSpeaking(true);
+      };
+      
+      utterance.onend = () => {
+        console.log('Speech ended');
+        setIsSpeaking(false);
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('Speech error:', event);
+        setIsSpeaking(false);
+        setVoiceDebugInfo(`Speech error: ${event.error}`);
+      };
 
+      // Workaround for Chrome bug - reset and resume synthesis
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      
       window.speechSynthesis.speak(utterance);
+      
+      // Chrome bug workaround - keep alive for longer utterances
+      const keepAlive = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          clearInterval(keepAlive);
+        }
+      }, 5000);
+      
+    } catch (error) {
+      console.error('Speech synthesis error:', error);
+      setVoiceDebugInfo(`Error in speech synthesis: ${error}`);
+      setIsSpeaking(false);
     }
   };
 
@@ -161,9 +229,18 @@ const VoiceChat: React.FC = () => {
 
   // Skip AI speaking
   const handleSkipSpeaking = () => {
-    if ('speechSynthesis' in window) {
+    if (speechSynthesisAvailable) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+    }
+  };
+
+  // Retry speaking the last AI message
+  const handleRetryLastSpeech = () => {
+    // Find the last AI message
+    const lastAiMessage = [...messages].reverse().find(m => m.sender === 'ai');
+    if (lastAiMessage) {
+      speak(lastAiMessage.text);
     }
   };
 
@@ -173,6 +250,13 @@ const VoiceChat: React.FC = () => {
         <TopicSelector selectedTopic={selectedTopic} onSelectTopic={setSelectedTopic} />
         <DifficultySelector difficulty={difficulty} onSelectDifficulty={setDifficulty} />
       </div>
+      
+      {!speechSynthesisAvailable && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <strong className="font-bold">Warning:</strong>
+          <span className="block sm:inline"> Speech synthesis is not available in your browser. You'll see the text but won't hear speech.</span>
+        </div>
+      )}
       
       <ConversationArea 
         messages={messages} 
@@ -186,6 +270,7 @@ const VoiceChat: React.FC = () => {
         transcript={transcript}
         onSendMessage={handleSendMessage}
         onSkipAiSpeaking={handleSkipSpeaking}
+        onRetryLastSpeech={handleRetryLastSpeech}
       />
     </div>
   );

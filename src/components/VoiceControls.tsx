@@ -1,4 +1,4 @@
-import { Mic, MicOff, Send, SkipForward, Volume2 } from 'lucide-react';
+import { Mic, MicOff, RefreshCw, Send, SkipForward, Volume2 } from 'lucide-react';
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -9,6 +9,7 @@ interface VoiceControlsProps {
   transcript: string;
   onSendMessage: () => void;
   onSkipAiSpeaking?: () => void;
+  onRetryLastSpeech?: () => void;
 }
 
 const VoiceControls: React.FC<VoiceControlsProps> = ({
@@ -17,7 +18,8 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
   onToggleListening,
   transcript,
   onSendMessage,
-  onSkipAiSpeaking
+  onSkipAiSpeaking,
+  onRetryLastSpeech
 }) => {
   const { theme } = useTheme();
   
@@ -42,7 +44,7 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           )}
         </button>
         
-        {isSpeaking && (
+        {isSpeaking ? (
           <button 
             onClick={onSkipAiSpeaking}
             className="p-4 bg-green-500 hover:bg-green-600 rounded-full transition-colors flex items-center"
@@ -50,6 +52,15 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           >
             <Volume2 className="w-6 h-6 text-white mr-2" />
             <SkipForward className="w-5 h-5 text-white" />
+          </button>
+        ) : onRetryLastSpeech && (
+          <button 
+            onClick={onRetryLastSpeech}
+            className="p-4 bg-orange-500 hover:bg-orange-600 rounded-full transition-colors flex items-center"
+            aria-label="Retry last speech"
+            title="Retry last speech"
+          >
+            <RefreshCw className="w-6 h-6 text-white" />
           </button>
         )}
       </div>

@@ -6,11 +6,13 @@ import MessageBubble from './MessageBubble';
 interface ConversationAreaProps {
   messages: Message[];
   currentTranscript: string;
+  onRetryAiSpeech?: (messageId: string) => void;
 }
 
 const ConversationArea: React.FC<ConversationAreaProps> = ({ 
   messages, 
-  currentTranscript 
+  currentTranscript,
+  onRetryAiSpeech
 }) => {
   const { theme } = useTheme();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -32,7 +34,14 @@ const ConversationArea: React.FC<ConversationAreaProps> = ({
         )}
         
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble 
+            key={message.id} 
+            message={message} 
+            onRetryAiSpeech={onRetryAiSpeech && message.sender === 'ai' 
+              ? () => onRetryAiSpeech(message.id) 
+              : undefined
+            }
+          />
         ))}
         
         {currentTranscript && (
