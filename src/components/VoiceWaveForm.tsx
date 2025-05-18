@@ -11,28 +11,30 @@ const VoiceWaveform: React.FC<WaveformProps> = ({ progress, isAi, isPlaying }) =
   // Number of bars to display
   const numBars = 30;
   
-  // Generate random heights for the bars (would be based on actual audio data in a real app)
+  // Generate random but consistent heights for the bars
   const generateBars = () => {
     const bars = [];
     for (let i = 0; i < numBars; i++) {
-      // Create random heights with some patterns to make it look like speech
-      const height = 30 + Math.sin(i * 0.5) * 25 + Math.random() * 25;
+      // Create pattern-based heights with some randomness to make it look like speech
+      // Using sine functions with different frequencies creates a natural wave pattern
+      const height = 30 + Math.sin(i * 0.5) * 25 + Math.sin(i * 0.2) * 15 + Math.random() * 15;
       bars.push(Math.max(15, Math.min(90, height))); // Clamp between 15% and 90%
     }
     return bars;
   };
   
-  const barHeights = generateBars();
+  // We use a ref to memoize the bar heights so they don't change on re-render
+  const barHeightsRef = React.useRef<number[]>(generateBars());
   
   // Calculate which bars should be highlighted based on progress
   const progressIndex = Math.floor((progress / 100) * numBars);
   
   return (
-    <div className="flex items-center h-8 space-x-1">
-      {barHeights.map((height, index) => (
+    <div className="flex items-center h-8 space-x-0.5">
+      {barHeightsRef.current.map((height, index) => (
         <div
           key={index}
-          className={`w-1 rounded-full transition-all duration-300 ${
+          className={`w-1 rounded-full transition-all duration-100 ${
             isPlaying ? 'animate-pulse' : ''
           } ${
             index <= progressIndex 

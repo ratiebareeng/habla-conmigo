@@ -1,4 +1,6 @@
+import { ChevronDown, ChevronUp, Pause, Play, RefreshCw } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import VoiceWaveform from './VoiceWaveForm';
 
 interface VoiceMessageProps {
   text: string;
@@ -14,13 +16,8 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
   const [intervalId, setIntervalId] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
+  // Clean up on unmount
   useEffect(() => {
-    // Create audio context and element when component mounts
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio();
-    }
-    
-    // Clean up on unmount
     return () => {
       if (intervalId) clearInterval(intervalId);
       if (audioRef.current) {
@@ -28,7 +25,7 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
         audioRef.current = null;
       }
     };
-  }, []);
+  }, [intervalId]);
   
   // Convert seconds to MM:SS format
   const formatTime = (seconds: number) => {
@@ -37,7 +34,7 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
   
-  // Handle play/pause toggle with fallback to visual simulation
+  // Handle play/pause toggle
   const togglePlayback = () => {
     if (isPlaying) {
       // If currently playing, stop playback
@@ -46,8 +43,8 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
         setIntervalId(null);
       }
       
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
       
       setIsPlaying(false);
@@ -58,54 +55,11 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
     setIsPlaying(true);
     
     // Try to use speech synthesis directly
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        // Call the parent's retry playback function which handles speech synthesis
-        if (onRetryPlayback) {
-          onRetryPlayback();
-        }
-        
-        // Simulate progress with intervals for visual feedback
-        // This is a fallback in case the speech synthesis doesn't properly trigger events
-        const interval = window.setInterval(() => {
-          setPlaybackProgress(prev => {
-            if (prev >= 100) {
-              clearInterval(interval);
-              setIsPlaying(false);
-              return 0;
-            }
-            return prev + 1;
-          });
-        }, duration * 10); // Speed up for demo purposes
-        
-        setIntervalId(interval);
-        
-        // Listen for speech synthesis ending (this may not always work)
-        const checkSpeechEnd = window.setInterval(() => {
-          if (!window.speechSynthesis.speaking) {
-            clearInterval(checkSpeechEnd);
-            setIsPlaying(false);
-            setPlaybackProgress(0);
-            if (intervalId) {
-              clearInterval(intervalId);
-              setIntervalId(null);
-            }
-          }
-        }, 500);
-        
-      } catch (error) {
-        console.error('Error starting speech playback:', error);
-        // Fall back to visual simulation
-        simulatePlayback();
-      }
-    } else {
-      // If speech synthesis is not available, simulate playback
-      simulatePlayback();
+    if (onRetryPlayback) {
+      onRetryPlayback();
     }
-  };
-  
-  // Function to simulate audio playback with visual progress
-  const simulatePlayback = () => {
+    
+    // Simulate progress for visual feedback
     const interval = window.setInterval(() => {
       setPlaybackProgress(prev => {
         if (prev >= 100) {
@@ -115,9 +69,24 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
         }
         return prev + 1;
       });
-    }, duration * 10);
+    }, duration * 10); // Speed up for demo purposes
     
     setIntervalId(interval);
+    
+    // Listen for speech synthesis ending
+    if (window.speechSynthesis) {
+      const checkSpeechEnd = window.setInterval(() => {
+        if (!window.speechSynthesis.speaking) {
+          clearInterval(checkSpeechEnd);
+          setIsPlaying(false);
+          setPlaybackProgress(0);
+          if (intervalId) {
+            clearInterval(intervalId);
+            setIntervalId(null);
+          }
+        }
+      }, 500);
+    }
   };
   
   // Toggle text visibility
@@ -126,7 +95,7 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
   };
   
   return (
-    <div className={`max-w-[300px] p-3 rounded-lg ${
+    <div className={`max-w-full p-3 rounded-lg ${
       isAi 
         ? 'bg-orange-100 text-slate-800 rounded-tl-none' 
         : 'bg-blue-600 text-white rounded-br-none'
@@ -144,14 +113,25 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
               // Reset and start progress animation
               setPlaybackProgress(0);
               setIsPlaying(true);
-              simulatePlayback();
+              
+              // Simulate progress with intervals
+              const interval = window.setInterval(() => {
+                setPlaybackProgress(prev => {
+                  if (prev >= 100) {
+                    clearInterval(interval);
+                    setIsPlaying(false);
+                    return 0;
+                  }
+                  return prev + 1;
+                });
+              }, duration * 10);
+              
+              setIntervalId(interval);
             }}
             className="ml-2 text-xs flex items-center text-orange-600"
-            title="Retry speech"
+            title="Play speech again"
           >
-            <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
-            </svg>
+            <RefreshCw className="w-3 h-3 mr-1" />
             Speak
           </button>
         )}
@@ -164,27 +144,23 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
           aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}
         >
           {isPlaying ? (
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="6" y="4" width="4" height="16" />
-              <rect x="14" y="4" width="4" height="16" />
-            </svg>
+            <Pause className="w-4 h-4 text-white" />
           ) : (
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
+            <Play className="w-4 h-4 text-white" />
           )}
         </button>
         
         {/* Audio waveform visualization */}
-        <div className="flex-grow h-8 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-          <div 
-            className={`h-full ${isAi ? 'bg-orange-500' : 'bg-blue-500'} rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
-            style={{ width: `${playbackProgress}%` }}
-          ></div>
+        <div className="flex-grow">
+          <VoiceWaveform 
+            progress={playbackProgress} 
+            isAi={isAi} 
+            isPlaying={isPlaying} 
+          />
         </div>
         
         <span className="ml-3 text-xs">
-          {formatTime(Math.floor(duration * playbackProgress / 100))}/{formatTime(duration)}
+          {formatTime(Math.floor(duration * playbackProgress / 100))} / {formatTime(duration)}
         </span>
       </div>
       
@@ -194,21 +170,11 @@ const VoiceMessage: React.FC<VoiceMessageProps> = ({ text, duration, isAi, onRet
           className={`text-xs flex items-center ${isAi ? 'text-orange-600' : 'text-blue-200'}`}
         >
           {showText ? 'Hide text' : 'Show text'}
-          <svg 
-            className="w-3 h-3 ml-1" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            {showText ? (
-              <polyline points="18 15 12 9 6 15" />
-            ) : (
-              <polyline points="6 9 12 15 18 9" />
-            )}
-          </svg>
+          {showText ? (
+            <ChevronUp className="w-3 h-3 ml-1" />
+          ) : (
+            <ChevronDown className="w-3 h-3 ml-1" />
+          )}
         </button>
         
         <span className={`text-xs ${isAi ? 'text-slate-500' : 'text-blue-100'}`}>
