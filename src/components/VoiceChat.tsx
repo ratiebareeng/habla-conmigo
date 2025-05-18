@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Difficulty, Message, Topic } from '../types/chat';
-import type { SpeechRecognition, SpeechRecognitionErrorEvent, SpeechRecognitionEvent } from '../types/speech-types';
+import type { SpeechRecognition, SpeechRecognitionEvent } from '../types/speech-types';
 import { getMockResponse } from '../utils/mockAiResponses';
 import ConversationArea from './ConversationArea';
 import DifficultySelector from './DifficultySelector';
@@ -13,7 +13,9 @@ const VoiceChat: React.FC = () => {
       id: '1',
       text: '¡Hola! ¿Cómo puedo ayudarte a practicar español hoy?',
       sender: 'ai',
-      timestamp: new Date()
+      timestamp: new Date(),
+      type: 'voice', // Mark AI messages as voice by default
+      audioDuration: 3 // Mock duration in seconds
     }
   ]);
   const [isListening, setIsListening] = useState(false);
@@ -23,18 +25,12 @@ const VoiceChat: React.FC = () => {
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const [autoListen, setAutoListen] = useState(true);
 
   // Initialize speech synthesis voices
   useEffect(() => {
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
       setVoices(availableVoices);
-      
-      // Log available Spanish voices for debugging
-      const spanishVoices = availableVoices.filter(voice => voice.lang.startsWith('es'));
-      console.log('Available Spanish voices:', spanishVoices);
     };
 
     loadVoices();
@@ -42,11 +38,6 @@ const VoiceChat: React.FC = () => {
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
-
-    // Speak welcome message when component mounts
-    setTimeout(() => {
-      speak(messages[0].text);
-    }, 1000);
 
     return () => {
       window.speechSynthesis.cancel(); // Cleanup any ongoing speech
@@ -69,7 +60,7 @@ const VoiceChat: React.FC = () => {
     
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = Array.from(event.results)
-        .map(result => (result[0] as SpeechRecognitionAlternative))
+        .map(result => ((result as SpeechRecognitionResult)[0] as SpeechRecognitionAlternative))
         .map(result => result.transcript)
         .join('');
       
@@ -82,14 +73,6 @@ const VoiceChat: React.FC = () => {
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error', event.error);
-      // If there's an error, stop listening
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setIsListening(false);
-      }
-    };
-
     recognitionRef.current = recognition;
 
     return () => {
@@ -97,25 +80,11 @@ const VoiceChat: React.FC = () => {
     };
   }, [isListening]);
 
-  // Auto-listen after AI finishes speaking if autoListen is enabled
-  useEffect(() => {
-    if (autoListen && !isSpeaking && messages.length > 1 && messages[messages.length - 1].sender === 'ai') {
-      // Small delay to allow UI to update
-      const timer = setTimeout(() => {
-        if (!isListening) {
-          toggleListening();
-        }
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isSpeaking, autoListen, messages]);
-
   // Handle text-to-speech
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
       // Cancel any ongoing speech
-      skipSpeaking();
+      window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
@@ -129,32 +98,13 @@ const VoiceChat: React.FC = () => {
       
       if (spanishVoice) {
         utterance.voice = spanishVoice;
-        console.log('Using voice:', spanishVoice.name);
-      } else {
-        console.log('No Spanish voice found, using default');
       }
 
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        utteranceRef.current = null;
-      };
-      utterance.onerror = () => {
-        setIsSpeaking(false);
-        utteranceRef.current = null;
-      };
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
 
-      utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  // Skip current speaking
-  const skipSpeaking = () => {
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      utteranceRef.current = null;
     }
   };
 
@@ -176,17 +126,12 @@ const VoiceChat: React.FC = () => {
   const handleSendMessage = () => {
     if (transcript.trim() === '') return;
 
-    // Stop listening while processing
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-    }
-
     const userMessage: Message = {
       id: Date.now().toString(),
       text: transcript,
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      type: 'text' // User messages are text by default
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -194,45 +139,39 @@ const VoiceChat: React.FC = () => {
 
     // Simulate AI response with a delay
     setTimeout(() => {
-      // Hardcoded responses for now as per user request
-      const aiResponse = getMockResponse(transcript, selectedTopic, difficulty);
+      const aiResponseText = getMockResponse(transcript, selectedTopic, difficulty);
+      // Calculate a mock duration based on text length
+      const estimatedDuration = Math.max(3, Math.floor(aiResponseText.length / 15));
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: aiResponse,
+        text: aiResponseText,
         sender: 'ai',
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'voice', // AI messages are voice by default
+        audioDuration: estimatedDuration
       };
+      
       setMessages(prev => [...prev, aiMessage]);
 
       // Speak the AI response
-      speak(aiResponse);
-    }, 800);
+      speak(aiResponseText);
+    }, 1000);
   };
 
-  // Toggle auto-listen feature
-  const toggleAutoListen = () => {
-    setAutoListen(!autoListen);
+  // Skip AI speaking
+  const handleSkipSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] md:h-[calc(100vh-220px)] max-w-4xl mx-auto">
-      <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4 mb-6">
-        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-          <TopicSelector selectedTopic={selectedTopic} onSelectTopic={setSelectedTopic} />
-          <DifficultySelector difficulty={difficulty} onSelectDifficulty={setDifficulty} />
-        </div>
-        
-        <div className="flex items-center">
-          <label className="flex items-center text-sm">
-            <input 
-              type="checkbox" 
-              checked={autoListen} 
-              onChange={toggleAutoListen} 
-              className="mr-2"
-            />
-            Auto-escuchar
-          </label>
-        </div>
+      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
+        <TopicSelector selectedTopic={selectedTopic} onSelectTopic={setSelectedTopic} />
+        <DifficultySelector difficulty={difficulty} onSelectDifficulty={setDifficulty} />
       </div>
       
       <ConversationArea 
@@ -246,7 +185,7 @@ const VoiceChat: React.FC = () => {
         onToggleListening={toggleListening}
         transcript={transcript}
         onSendMessage={handleSendMessage}
-        onSkipAiSpeaking={skipSpeaking}
+        onSkipAiSpeaking={handleSkipSpeaking}
       />
     </div>
   );
