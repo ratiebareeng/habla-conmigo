@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { Message } from '../types/chat';
 import MessageBubble from './MessageBubble';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface ConversationAreaProps {
   messages: Message[];
@@ -25,6 +25,12 @@ const ConversationArea: React.FC<ConversationAreaProps> = ({
       theme === 'dark' ? 'bg-slate-800' : 'bg-white bg-opacity-80 backdrop-blur-sm'
     } shadow-md`}>
       <div className="space-y-4">
+        {messages.length === 0 && (
+          <div className="flex justify-center items-center h-full text-gray-400 text-center p-8">
+            <p>Presiona el micrófono y comienza a hablar en español para iniciar la conversación</p>
+          </div>
+        )}
+        
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
