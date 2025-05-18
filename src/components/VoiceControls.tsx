@@ -1,10 +1,11 @@
-import { Mic, MicOff, RefreshCw, Send, SkipForward, Volume2 } from 'lucide-react';
+import { Loader, Mic, MicOff, RefreshCw, Send, SkipForward, Volume2 } from 'lucide-react';
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface VoiceControlsProps {
   isListening: boolean;
   isSpeaking: boolean;
+  isLoading: boolean;
   onToggleListening: () => void;
   transcript: string;
   onSendMessage: () => void;
@@ -15,6 +16,7 @@ interface VoiceControlsProps {
 const VoiceControls: React.FC<VoiceControlsProps> = ({
   isListening,
   isSpeaking,
+  isLoading,
   onToggleListening,
   transcript,
   onSendMessage,
@@ -34,8 +36,9 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
             isListening 
               ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
               : 'bg-blue-500 hover:bg-blue-600'
-          }`}
+          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           aria-label={isListening ? 'Stop listening' : 'Start listening'}
+          disabled={isLoading}
         >
           {isListening ? (
             <MicOff className="w-8 h-8 text-white" />
@@ -44,7 +47,11 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           )}
         </button>
         
-        {isSpeaking ? (
+        {isLoading ? (
+          <div className="p-4 bg-orange-500 rounded-full transition-colors flex items-center animate-pulse">
+            <Loader className="w-6 h-6 text-white animate-spin" />
+          </div>
+        ) : isSpeaking ? (
           <button 
             onClick={onSkipAiSpeaking}
             className="p-4 bg-green-500 hover:bg-green-600 rounded-full transition-colors flex items-center"
@@ -70,12 +77,14 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
           theme === 'dark' ? 'bg-slate-700' : 'bg-gray-100'
         } text-sm md:text-base min-h-12 flex items-center justify-between`}>
           <p className="flex-grow">
-            {transcript || (isListening 
-              ? <span className="text-green-500 font-medium">Escuchando... Habla en español</span> 
-              : <span className="text-gray-500">Presiona el micrófono para hablar</span>)}
+            {transcript || (isLoading 
+              ? <span className="text-orange-500 font-medium animate-pulse">Procesando respuesta...</span>
+              : isListening 
+                ? <span className="text-green-500 font-medium">Escuchando... Habla en español</span> 
+                : <span className="text-gray-500">Presiona el micrófono para hablar</span>)}
           </p>
           
-          {transcript && (
+          {transcript && !isLoading && (
             <button
               onClick={onSendMessage}
               className="ml-2 p-2 bg-orange-500 hover:bg-orange-600 rounded-full transition-colors"
