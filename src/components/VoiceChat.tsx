@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ConversationArea from './ConversationArea';
-import VoiceControls from './VoiceControls';
-import TopicSelector from './TopicSelector';
-import DifficultySelector from './DifficultySelector';
-import { Message, Topic, Difficulty } from '../types/chat';
+import React, { useEffect, useRef, useState } from 'react';
+import { Difficulty, Message, Topic } from '../types/chat';
+import type { SpeechRecognition, SpeechRecognitionErrorEvent, SpeechRecognitionEvent } from '../types/speech-types';
 import { getMockResponse } from '../utils/mockAiResponses';
+import ConversationArea from './ConversationArea';
+import DifficultySelector from './DifficultySelector';
+import TopicSelector from './TopicSelector';
+import VoiceControls from './VoiceControls';
 
 const VoiceChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -22,12 +23,18 @@ const VoiceChat: React.FC = () => {
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [autoListen, setAutoListen] = useState(true);
 
   // Initialize speech synthesis voices
   useEffect(() => {
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
       setVoices(availableVoices);
+      
+      // Log available Spanish voices for debugging
+      const spanishVoices = availableVoices.filter(voice => voice.lang.startsWith('es'));
+      console.log('Available Spanish voices:', spanishVoices);
     };
 
     loadVoices();
@@ -35,6 +42,11 @@ const VoiceChat: React.FC = () => {
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
+
+    // Speak welcome message when component mounts
+    setTimeout(() => {
+      speak(messages[0].text);
+    }, 1000);
 
     return () => {
       window.speechSynthesis.cancel(); // Cleanup any ongoing speech
@@ -55,9 +67,9 @@ const VoiceChat: React.FC = () => {
     recognition.interimResults = true;
     recognition.lang = 'es-ES';
     
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = Array.from(event.results)
-        .map(result => result[0])
+        .map(result => (result[0] as SpeechRecognitionAlternative))
         .map(result => result.transcript)
         .join('');
       
@@ -70,6 +82,14 @@ const VoiceChat: React.FC = () => {
       }
     };
 
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error', event.error);
+      // If there's an error, stop listening
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setIsListening(false);
+      }
+    };
+
     recognitionRef.current = recognition;
 
     return () => {
@@ -77,11 +97,25 @@ const VoiceChat: React.FC = () => {
     };
   }, [isListening]);
 
+  // Auto-listen after AI finishes speaking if autoListen is enabled
+  useEffect(() => {
+    if (autoListen && !isSpeaking && messages.length > 1 && messages[messages.length - 1].sender === 'ai') {
+      // Small delay to allow UI to update
+      const timer = setTimeout(() => {
+        if (!isListening) {
+          toggleListening();
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isSpeaking, autoListen, messages]);
+
   // Handle text-to-speech
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
       // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+      skipSpeaking();
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
@@ -95,13 +129,32 @@ const VoiceChat: React.FC = () => {
       
       if (spanishVoice) {
         utterance.voice = spanishVoice;
+        console.log('Using voice:', spanishVoice.name);
+      } else {
+        console.log('No Spanish voice found, using default');
       }
 
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        utteranceRef.current = null;
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        utteranceRef.current = null;
+      };
 
+      utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Skip current speaking
+  const skipSpeaking = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      utteranceRef.current = null;
     }
   };
 
@@ -123,6 +176,12 @@ const VoiceChat: React.FC = () => {
   const handleSendMessage = () => {
     if (transcript.trim() === '') return;
 
+    // Stop listening while processing
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       text: transcript,
@@ -135,6 +194,7 @@ const VoiceChat: React.FC = () => {
 
     // Simulate AI response with a delay
     setTimeout(() => {
+      // Hardcoded responses for now as per user request
       const aiResponse = getMockResponse(transcript, selectedTopic, difficulty);
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -146,14 +206,33 @@ const VoiceChat: React.FC = () => {
 
       // Speak the AI response
       speak(aiResponse);
-    }, 1000);
+    }, 800);
+  };
+
+  // Toggle auto-listen feature
+  const toggleAutoListen = () => {
+    setAutoListen(!autoListen);
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] md:h-[calc(100vh-220px)] max-w-4xl mx-auto">
-      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
-        <TopicSelector selectedTopic={selectedTopic} onSelectTopic={setSelectedTopic} />
-        <DifficultySelector difficulty={difficulty} onSelectDifficulty={setDifficulty} />
+      <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4 mb-6">
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+          <TopicSelector selectedTopic={selectedTopic} onSelectTopic={setSelectedTopic} />
+          <DifficultySelector difficulty={difficulty} onSelectDifficulty={setDifficulty} />
+        </div>
+        
+        <div className="flex items-center">
+          <label className="flex items-center text-sm">
+            <input 
+              type="checkbox" 
+              checked={autoListen} 
+              onChange={toggleAutoListen} 
+              className="mr-2"
+            />
+            Auto-escuchar
+          </label>
+        </div>
       </div>
       
       <ConversationArea 
@@ -167,6 +246,7 @@ const VoiceChat: React.FC = () => {
         onToggleListening={toggleListening}
         transcript={transcript}
         onSendMessage={handleSendMessage}
+        onSkipAiSpeaking={skipSpeaking}
       />
     </div>
   );
