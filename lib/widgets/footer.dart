@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:habla_conmigo/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
-
-import '../providers/theme_provider.dart';
 
 class Footer extends StatelessWidget {
   const Footer({super.key});

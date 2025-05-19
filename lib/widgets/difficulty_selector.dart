@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:habla_conmigo/models/chat.dart';
+import 'package:habla_conmigo/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
-
-import '../models/chat.dart';
-import '../providers/theme_provider.dart';
 
 class DifficultySelector extends StatelessWidget {
   final Difficulty difficulty;

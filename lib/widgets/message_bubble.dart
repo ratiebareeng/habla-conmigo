@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:habla_conmigo/models/chat.dart';
 import 'package:intl/intl.dart';
 
-import '../models/chat.dart';
 import 'voice_message.dart';
 
 class MessageBubble extends StatelessWidget {

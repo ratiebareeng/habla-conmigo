@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:habla_conmigo/models/chat.dart';
+import 'package:habla_conmigo/providers/theme_provider.dart';
+import 'package:habla_conmigo/services/mock_ai_service.dart';
+import 'package:habla_conmigo/widgets/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:uuid/uuid.dart';
-
-import '../models/chat.dart';
-import '../providers/theme_provider.dart';
-import '../services/mock_ai_service.dart';
-import '../widgets/widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -1,4 +1,4 @@
-import '../models/chat.dart';
+import 'package:habla_conmigo/models/chat.dart';
 
 class MockAiService {
   // Basic responses based on topic and difficulty
