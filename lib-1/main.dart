@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
               elevation: 1,
             ),
           ),
-          // themeMode: themeProvider.themeMode,
+          themeMode: themeProvider.themeMode,
           // home: const HomeScreen(),
           home: Text('home'),
         ),
