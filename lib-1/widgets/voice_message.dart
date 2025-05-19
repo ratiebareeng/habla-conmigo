@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'voice_waveform.dart';
+import 'wave_form_widget.dart';
 
 class VoiceMessage extends StatefulWidget {
   final String text;
