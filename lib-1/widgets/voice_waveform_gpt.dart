@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class VoiceWaveform extends StatelessWidget {
+class VoiceWaveformGpt extends StatelessWidget {
   final List<double> waveformData;
 
-  VoiceWaveform({required this.waveformData});
+  const VoiceWaveformGpt({super.key, required this.waveformData});
 
   @override
   Widget build(BuildContext context) {
