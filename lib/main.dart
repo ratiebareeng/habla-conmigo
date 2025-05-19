@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habla_conmigo/providers/theme_provider.dart';
+import 'package:habla_conmigo/screens/home_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -45,8 +46,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           themeMode: themeProvider.themeMode,
-          // home: const HomeScreen(),
-          home: Text('home'),
+          home: const HomeScreen(),
         ),
       ),
     );
