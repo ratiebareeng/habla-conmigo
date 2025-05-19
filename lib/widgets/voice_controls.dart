@@ -53,117 +53,54 @@ class VoiceControls extends StatelessWidget {
           // Main controls row
           Row(
             children: [
-              // Mic and additional control buttons
-              Row(
-                children: [
-                  // Mic button
-                  ElevatedButton(
-                    onPressed: isLoading ? null : onToggleListening,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isListening ? Colors.red[500] : Colors.blue[500],
-                      foregroundColor: Colors.white,
-                      shape: const CircleBorder(),
-                      padding: EdgeInsets.all(isMobile ? 16 : 20),
-                      disabledBackgroundColor: Colors.grey[400],
-                    ),
-                    child: Icon(
-                      isListening ? Icons.mic_off : Icons.mic,
-                      size: isMobile ? 24 : 28,
-                    ),
-                  ).animate(target: isListening ? 1 : 0).shimmer(
-                        duration: 1.5.seconds,
-                        delay: 200.ms,
-                        curve: Curves.easeInOut,
-                      ),
-
-                  if (!isMobile) const SizedBox(width: 12),
-
-                  // Secondary button (shows loading, speaking, or retry)
-                  if (isLoading)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.orange[500],
-                        shape: BoxShape.circle,
-                      ),
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      ),
-                    )
-                  else if (isSpeaking && onSkipAiSpeaking != null)
-                    ElevatedButton.icon(
-                      onPressed: onSkipAiSpeaking,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[500],
-                        foregroundColor: Colors.white,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      icon: const Icon(Icons.volume_up, size: 20),
-                      label: const Icon(Icons.skip_next, size: 16),
-                    )
-                  else if (onRetryLastSpeech != null && !isListening)
-                    ElevatedButton(
-                      onPressed: onRetryLastSpeech,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange[500],
-                        foregroundColor: Colors.white,
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(16),
-                      ),
-                      child: const Icon(Icons.refresh, size: 20),
-                    ),
-                ],
-              ),
-
-              const SizedBox(width: 16),
-
               // Text area
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[800] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _getDisplayText(),
-                          style: TextStyle(
-                            color: _getTextColor(isDark),
-                            fontWeight: isListening ? FontWeight.w500 : null,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _getDisplayText(),
+                        style: TextStyle(
+                          color: _getTextColor(isDark),
+                          fontWeight: isListening ? FontWeight.w500 : null,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                      if (transcript.isNotEmpty && !isLoading)
-                        IconButton(
-                          onPressed: onSendMessage,
-                          icon: const Icon(Icons.send),
-                          color: Colors.orange[500],
-                          iconSize: 20,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                    ],
-                  ),
+                    ),
+                    if (transcript.isNotEmpty && !isLoading)
+                      IconButton(
+                        onPressed: onSendMessage,
+                        icon: const Icon(Icons.send),
+                        color: Colors.orange[500],
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 16),
+              // Mic and additional control buttons
+              ElevatedButton(
+                onPressed: isLoading ? null : onToggleListening,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      isListening ? Colors.red[500] : Colors.blue[500],
+                  foregroundColor: Colors.white,
+                  shape: const CircleBorder(),
+                  padding: EdgeInsets.all(isMobile ? 16 : 20),
+                  disabledBackgroundColor: Colors.grey[400],
+                ),
+                child: Icon(
+                  isListening ? Icons.mic_off : Icons.mic,
+                  size: isMobile ? 24 : 28,
+                ),
+              ).animate(target: isListening ? 1 : 0).shimmer(
+                    duration: 1.5.seconds,
+                    delay: 200.ms,
+                    curve: Curves.easeInOut,
+                  ),
             ],
           ),
 
