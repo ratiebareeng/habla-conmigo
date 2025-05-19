@@ -20,8 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isListening = false;
   bool _isSpeaking = false;
   bool _isLoading = false;
-  Topic _selectedTopic = Topic.general;
-  Difficulty _difficulty = Difficulty.beginner;
+  final Topic _selectedTopic = Topic.general;
+  final Difficulty _difficulty = Difficulty.beginner;
   String _transcript = '';
   String _voiceDebugInfo = '';
 
@@ -44,66 +44,33 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Topic and difficulty selectors
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 800),
+            Column(
+              children: [
+                // TTS warning if needed
+                if (!_ttsAvailable)
+                  Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red[400]!),
+                    ),
                     child: Row(
                       children: [
+                        Icon(Icons.warning_amber_rounded,
+                            color: Colors.red[700]),
+                        const SizedBox(width: 8),
                         Expanded(
-                          child: TopicSelector(
-                            selectedTopic: _selectedTopic,
-                            onSelectTopic: (topic) {
-                              setState(() {
-                                _selectedTopic = topic;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: DifficultySelector(
-                            difficulty: _difficulty,
-                            onSelectDifficulty: (difficulty) {
-                              setState(() {
-                                _difficulty = difficulty;
-                              });
-                            },
+                          child: Text(
+                            'Text-to-speech is not available. You\'ll see the text but won\'t hear speech.',
+                            style: TextStyle(color: Colors.red[700]),
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                  // TTS warning if needed
-                  if (!_ttsAvailable)
-                    Container(
-                      margin: const EdgeInsets.only(top: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red[100],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red[400]!),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.warning_amber_rounded,
-                              color: Colors.red[700]),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Text-to-speech is not available. You\'ll see the text but won\'t hear speech.',
-                              style: TextStyle(color: Colors.red[700]),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
 
             // Conversation area
@@ -145,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const Footer(),
     );
   }
 
