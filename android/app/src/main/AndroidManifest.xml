@@ -1,14 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <application
         android:label="habla_conmigo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <uses-permission android:name="android.permission.INTERNET" />
-        <uses-permission android:name="android.permission.RECORD_AUDIO" />
-        s<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
         <activity
             android:name=".MainActivity"
-            androi:exported="true"
+            android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
