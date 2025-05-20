@@ -3,6 +3,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:habla_conmigo/models/chat.dart';
 import 'package:habla_conmigo/providers/theme_provider.dart';
 import 'package:habla_conmigo/services/mock_ai_service.dart';
+import 'package:habla_conmigo/services/vapi_api_service.dart';
 import 'package:habla_conmigo/widgets/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -32,6 +33,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Text-to-speech
   final FlutterTts _flutterTts = FlutterTts();
   bool _ttsAvailable = false;
+
+  // Vapi API service
+  final VapiApiService _vapiService = VapiApiService.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -85,15 +89,28 @@ class _HomeScreenState extends State<HomeScreen> {
             // Voice controls
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: VoiceControls(
-                isListening: _isListening,
-                isSpeaking: _isSpeaking,
-                isLoading: _isLoading,
-                onToggleListening: _toggleListening,
-                transcript: _transcript,
-                onSendMessage: _handleSendMessage,
-                onSkipAiSpeaking: _handleSkipSpeaking,
-                onRetryLastSpeech: _handleRetryLastSpeech,
+              child: Column(
+                children: [
+                  VoiceControls(
+                    isListening: _isListening,
+                    isSpeaking: _isSpeaking,
+                    isLoading: _isLoading,
+                    onToggleListening: _toggleListening,
+                    transcript: _transcript,
+                    onSendMessage: _handleSendMessage,
+                    onSkipAiSpeaking: _handleSkipSpeaking,
+                    onRetryLastSpeech: _handleRetryLastSpeech,
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => _toggleMuteMic(true),
+                    child: const Text('Mute Microphone'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _toggleMuteMic(false),
+                    child: const Text('Unmute Microphone'),
+                  ),
+                ],
               ),
             ),
 
@@ -119,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _speech.stop();
     _flutterTts.stop();
+    _vapiService.stop();
     super.dispose();
   }
 
@@ -127,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initSpeech();
     _initTts();
+    _initVapi();
 
     // Add initial greeting
     _messages.add(
@@ -263,6 +282,25 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
+  // Initialize Vapi service
+  Future<void> _initVapi() async {
+    _vapiService.listen().listen((event) {
+      if (event.label == "message") {
+        setState(() {
+          _voiceDebugInfo = 'Vapi Message: ${event.value}';
+        });
+      }
+    });
+
+    // try {
+    //   await _vapiService.start(); // Start the Vapi call
+    // } catch (e) {
+    //   setState(() {
+    //     _voiceDebugInfo = 'Error starting Vapi: $e';
+    //   });
+    // }
+  }
+
   // Speak text
   Future<void> _speak(String text) async {
     if (!_ttsAvailable) {
@@ -316,6 +354,20 @@ class _HomeScreenState extends State<HomeScreen> {
         _isListening = true;
       });
       _startListening();
+    }
+  }
+
+  // Toggle microphone mute
+  void _toggleMuteMic(bool mute) {
+    try {
+      _vapiService.muteMic(mute);
+      setState(() {
+        _voiceDebugInfo = mute ? 'Microphone muted' : 'Microphone unmuted';
+      });
+    } catch (e) {
+      setState(() {
+        _voiceDebugInfo = 'Error toggling mute: $e';
+      });
     }
   }
 }
