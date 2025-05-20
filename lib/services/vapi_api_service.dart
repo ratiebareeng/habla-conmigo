@@ -33,7 +33,7 @@ class VapiApiService {
   }
 
   // Mute user mic
-  Future<void> muteMic(bool mute) async {
+  void muteMic(bool mute) {
     vapi.setMuted(mute);
   }
 
