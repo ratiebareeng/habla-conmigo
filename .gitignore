@@ -47,3 +47,6 @@ app.*.map.json
 /windows/flutter
 /ios/Flutter
 /macos/Flutter
+
+# Project sensitive files
+/lib/api_key.dart
