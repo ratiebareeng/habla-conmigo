@@ -43,7 +43,12 @@ class VapiApiService {
     dynamic assistant,
     dynamic assistantOverrides = const {},
   }) async {
-    await vapi.start(assistant: vapiAssistantRaul);
+    try {
+      await vapi.start(assistant: vapiAssistantRaul);
+    } on Exception catch (e) {
+      log('Error starting Vapi: $e');
+      log(e.toString());
+    }
   }
 
   // Stop the Vapi call

@@ -145,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initSpeech();
     _initTts();
-    _initVapi();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _initVapi();
+    });
 
     // Add initial greeting
     _messages.add(
@@ -292,13 +294,13 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    // try {
-    //   await _vapiService.start(); // Start the Vapi call
-    // } catch (e) {
-    //   setState(() {
-    //     _voiceDebugInfo = 'Error starting Vapi: $e';
-    //   });
-    // }
+    try {
+      await _vapiService.start(); // Start the Vapi call
+    } catch (e) {
+      setState(() {
+        _voiceDebugInfo = 'Error starting Vapi: $e';
+      });
+    }
   }
 
   // Speak text
