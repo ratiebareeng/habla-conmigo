@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habla_conmigo/providers/theme_provider.dart';
-import 'package:habla_conmigo/screens/vapi_example.dart';
+import 'package:habla_conmigo/screens/call_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           themeMode: themeProvider.themeMode,
-          home: const VapiExample(),
+          home: const CallPage(),
         ),
       ),
     );
