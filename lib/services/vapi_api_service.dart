@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:habla_conmigo/api_key.dart';
-import 'package:vapi/Vapi.dart';
+import 'package:vapinew/vapinew.dart';
 
 class VapiApiService {
   static final VapiApiService _instance = VapiApiService._internal();
