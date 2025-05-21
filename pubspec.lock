@@ -133,10 +133,10 @@ packages:
     dependency: transitive
     description:
       name: daily_flutter
-      sha256: "97667796d7f529f6f27dcc8794747a56c54c41b5dd31b8701d41709204768df7"
+      sha256: abce46366b656148e9a05363ffd331584be06d1f0420cd290d3d28d373bd5e40
       url: "https://pub.dev"
     source: hosted
-    version: "0.16.0-beta.1"
+    version: "0.22.0"
   fake_async:
     dependency: transitive
     description:
@@ -452,18 +452,18 @@ packages:
     dependency: transitive
     description:
       name: permission_handler
-      sha256: "2d070d8684b68efb580a5997eb62f675e8a885ef0be6e754fb9ef489c177470f"
+      sha256: "59adad729136f01ea9e35a48f5d1395e25cba6cea552249ddbe9cf950f5d7849"
       url: "https://pub.dev"
     source: hosted
-    version: "12.0.0+1"
+    version: "11.4.0"
   permission_handler_android:
     dependency: transitive
     description:
       name: permission_handler_android
-      sha256: "1e3bc410ca1bf84662104b100eb126e066cb55791b7451307f9708d4007350e6"
+      sha256: d3971dcdd76182a0c198c096b5db2f0884b0d4196723d21a866fc4cdea057ebc
       url: "https://pub.dev"
     source: hosted
-    version: "13.0.1"
+    version: "12.1.0"
   permission_handler_apple:
     dependency: transitive
     description:
@@ -685,14 +685,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.1"
-  vapi:
+  vapinew:
     dependency: "direct main"
     description:
-      name: vapi
-      sha256: a91b8feb46e9e071d440d62bced829ea66fa4ef7017db51c3c7f2056dbe12519
+      name: vapinew
+      sha256: "571f407fda9b16f865892babc8aa6511e1d9635070701f67738e985eab2f4a32"
       url: "https://pub.dev"
     source: hosted
-    version: "0.0.9"
+    version: "0.0.2"
   vector_graphics:
     dependency: transitive
     description:
