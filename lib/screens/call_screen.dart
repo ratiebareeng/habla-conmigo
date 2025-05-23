@@ -182,26 +182,26 @@ class _CallPageState extends State<CallPage>
           ),
         ),
         const SizedBox(height: 24),
-        Text(
-          statusMessage,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        if (isCallActive && lastMessage.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, left: 32.0, right: 32.0),
-            child: Text(
-              lastMessage,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 14,
-              ),
-            ),
-          ),
+        // Text(
+        //   statusMessage,
+        //   style: const TextStyle(
+        //     color: Colors.white,
+        //     fontSize: 18,
+        //     fontWeight: FontWeight.w500,
+        //   ),
+        // ),
+        // if (isCallActive && lastMessage.isNotEmpty)
+        //   Padding(
+        //     padding: const EdgeInsets.only(top: 8.0, left: 32.0, right: 32.0),
+        //     child: Text(
+        //       lastMessage,
+        //       textAlign: TextAlign.center,
+        //       style: TextStyle(
+        //         color: Colors.white.withValues(alpha: 0.7),
+        //         fontSize: 14,
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }
